@@ -29,8 +29,9 @@ import com.google.gson.Gson;
 
 public class Driver {
 	public static void main(String[] args) {
+		// 490600006
 		Gson gson = new Gson();
-		for (int i = 605912900; i < 605913000; i++) {
+		for (int i = 490600006; i < 607245956; i++) {
 			try {
 				System.out.println(gson.toJson(scrapeMatch(i)));
 			} catch (MatchNotFoundException e) {
