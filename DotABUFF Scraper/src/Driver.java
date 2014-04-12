@@ -1,10 +1,13 @@
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.sql.Time;
+import java.sql.Timestamp;
+import java.util.List;
+import java.util.HashMap;
 import java.util.logging.Level;
 
 import org.apache.commons.logging.LogFactory;
-import org.apache.xerces.impl.xpath.regex.Match;
 import org.w3c.css.sac.CSSException;
 import org.w3c.css.sac.CSSParseException;
 import org.w3c.css.sac.ErrorHandler;
@@ -14,26 +17,27 @@ import com.gargoylesoftware.htmlunit.IncorrectnessListener;
 import com.gargoylesoftware.htmlunit.ScriptException;
 import com.gargoylesoftware.htmlunit.WebClient;
 import com.gargoylesoftware.htmlunit.html.HTMLParserListener;
-import com.gargoylesoftware.htmlunit.html.HtmlDivision;
-import com.gargoylesoftware.htmlunit.html.HtmlElement;
 import com.gargoylesoftware.htmlunit.html.HtmlPage;
+import com.gargoylesoftware.htmlunit.html.HtmlTable;
+import com.gargoylesoftware.htmlunit.html.HtmlTableBody;
+import com.gargoylesoftware.htmlunit.html.HtmlTableCell;
+import com.gargoylesoftware.htmlunit.html.HtmlTableHeader;
+import com.gargoylesoftware.htmlunit.html.HtmlTableRow;
 import com.gargoylesoftware.htmlunit.javascript.JavaScriptErrorListener;
-import com.google.gson.Gson;
 
 public class Driver {
 	public static void main(String[] args) {
-
-		String derp = "hello, world!";
-
-		// create the gson object
-		Gson gson = new Gson();
-		// use the gson objected created to convert albums to json
-		// representation
-		System.out.println(gson.toJson(derp));
-		// prints
-		// {"title":"Example","dataset":[{"album_title":"album1","otherProperties":{}}]}
-
+		int mID;
+		String lobbyType;
+		String gameMode;
+		String region;
+		Time duration;
+		boolean dRVictory;
+		Timestamp timestamp;
+		PlayerInstance[] players;
+		
 		try {
+			scrapeMatch(605912917);
 			WebClient webClient = new WebClient();
 			turnOffWarnings(webClient);
 			HtmlPage page = webClient.getPage("http://dotabuff.com/matches/605912917");
@@ -41,7 +45,7 @@ public class Driver {
 			HtmlDivision div = (HtmlDivision) page.getByXPath("//div[@class='team-results']").get(0);
 			for (HtmlElement he : div.getHtmlElementsByTagName("section")) {
 				HtmlElement teamTable = he.getHtmlElementsByTagName("tbody").get(0);
-				for (HtmlElement player : teamTable.getHtmlElementsByTagName("tr")) {
+				for (HtmlElement player : teamTable.getHtmlElementsByTagName("tr")) { 
 					System.out.println(player.asText());// .replace("\n", ""));
 				}
 				System.out.println();
@@ -60,6 +64,36 @@ public class Driver {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+	}
+
+	private static Match scrapeMatch(int id) throws FailingHttpStatusCodeException, MalformedURLException, IOException {
+		WebClient webClient = new WebClient();
+		turnOffWarnings(webClient);
+		HtmlPage page = webClient.getPage("http://dotabuff.com/matches/" + id);
+		List<HtmlTable> teamTables = (List<HtmlTable>) page.getByXPath("//table");
+		for (HtmlTable team : teamTables) {
+			HtmlTableHeader header = team.getHeader();
+			List<HtmlTableRow> headerRows = header.getRows();
+			for (HtmlTableRow row : headerRows) {
+				System.out.println("Column Headers:");
+				for (HtmlTableCell cell : row.getCells()) {
+					System.out.print(cell.asText() + " ");
+				}
+				System.out.println();
+			}
+			for (HtmlTableBody body : team.getBodies()) {
+				List<HtmlTableRow> rows = body.getRows();
+				for (HtmlTableRow row : rows) {
+					for (final HtmlTableCell cell : row.getCells()) {
+						System.out.println("   Found cell: " + cell.asText());
+					}
+				}
+
+			}
+		}
+		webClient.closeAllWindows();
+
+		return new Match();
 	}
 
 	private static void turnOffWarnings(WebClient webClient) {
@@ -123,7 +157,7 @@ public class Driver {
 			public void loadScriptError(HtmlPage arg0, URL arg1, Exception arg2) {
 				// TODO Auto-generated method stub
 
-			} 
+			}
 		});
 		webClient.setHTMLParserListener(new HTMLParserListener() {
 
