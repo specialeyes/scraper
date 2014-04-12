@@ -123,7 +123,7 @@ public class Driver {
 			public void loadScriptError(HtmlPage arg0, URL arg1, Exception arg2) {
 				// TODO Auto-generated method stub
 
-			}
+			} 
 		});
 		webClient.setHTMLParserListener(new HTMLParserListener() {
 
