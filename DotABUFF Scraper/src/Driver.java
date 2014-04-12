@@ -35,25 +35,8 @@ public class Driver {
 		boolean dRVictory;
 		Timestamp timestamp;
 		PlayerInstance[] players;
-		
 		try {
 			scrapeMatch(605912917);
-			WebClient webClient = new WebClient();
-			turnOffWarnings(webClient);
-			HtmlPage page = webClient.getPage("http://dotabuff.com/matches/605912917");
-
-			HtmlDivision div = (HtmlDivision) page.getByXPath("//div[@class='team-results']").get(0);
-			for (HtmlElement he : div.getHtmlElementsByTagName("section")) {
-				HtmlElement teamTable = he.getHtmlElementsByTagName("tbody").get(0);
-				for (HtmlElement player : teamTable.getHtmlElementsByTagName("tr")) { 
-					System.out.println(player.asText());// .replace("\n", ""));
-				}
-				System.out.println();
-			}
-
-			System.out.println();
-
-			webClient.closeAllWindows();
 		} catch (FailingHttpStatusCodeException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
