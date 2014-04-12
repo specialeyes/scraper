@@ -4,7 +4,6 @@ import java.net.URL;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.util.List;
-import java.util.HashMap;
 import java.util.logging.Level;
 
 import org.apache.commons.logging.LogFactory;
@@ -12,11 +11,13 @@ import org.w3c.css.sac.CSSException;
 import org.w3c.css.sac.CSSParseException;
 import org.w3c.css.sac.ErrorHandler;
 
-import com.gargoylesoftware.htmlunit.FailingHttpStatusCodeException;
+import com.gargoylesoftware.htmlunit.ElementNotFoundException;
 import com.gargoylesoftware.htmlunit.IncorrectnessListener;
 import com.gargoylesoftware.htmlunit.ScriptException;
 import com.gargoylesoftware.htmlunit.WebClient;
 import com.gargoylesoftware.htmlunit.html.HTMLParserListener;
+import com.gargoylesoftware.htmlunit.html.HtmlDivision;
+import com.gargoylesoftware.htmlunit.html.HtmlElement;
 import com.gargoylesoftware.htmlunit.html.HtmlPage;
 import com.gargoylesoftware.htmlunit.html.HtmlTable;
 import com.gargoylesoftware.htmlunit.html.HtmlTableBody;
@@ -24,59 +25,95 @@ import com.gargoylesoftware.htmlunit.html.HtmlTableCell;
 import com.gargoylesoftware.htmlunit.html.HtmlTableHeader;
 import com.gargoylesoftware.htmlunit.html.HtmlTableRow;
 import com.gargoylesoftware.htmlunit.javascript.JavaScriptErrorListener;
+import com.google.gson.Gson;
 
 public class Driver {
 	public static void main(String[] args) {
-		int mID;
-		String lobbyType;
-		String gameMode;
-		String region;
-		Time duration;
-		boolean dRVictory;
-		Timestamp timestamp;
-		PlayerInstance[] players;
-		try {
-			scrapeMatch(605912917);
-		} catch (FailingHttpStatusCodeException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (MalformedURLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+		Gson gson = new Gson();
+		for (int i = 605912900; i < 605913000; i++) {
+			try {
+				System.out.println(gson.toJson(scrapeMatch(i)));
+			} catch (MatchNotFoundException e) {
+				System.err.println("Match " + i + " not found!");
+			} catch (IOException e) {
+				System.err.println("Failed to scrape page!");
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
 		}
 	}
 
-	private static Match scrapeMatch(int id) throws FailingHttpStatusCodeException, MalformedURLException, IOException {
+	private static Match scrapeMatch(int id) throws MatchNotFoundException, IOException {
 		WebClient webClient = new WebClient();
 		turnOffWarnings(webClient);
 		HtmlPage page = webClient.getPage("http://dotabuff.com/matches/" + id);
+
+		try {
+			page.getHtmlElementById("status");
+			throw new MatchNotFoundException();
+		} catch (ElementNotFoundException e) {
+		}
+
+		int mID = id;
+		String lobbyType = "null";
+		String gameMode = "null";
+		String region = "null";
+		Time duration = Time.valueOf("00:00:00");
+		boolean radiantVictory = false;
+		Timestamp timestamp = Timestamp.valueOf("0000-00-00 0:0:0.0");
+		PlayerInstance[] players = null;
+
+		// Match metadata
+		HtmlDivision div = page.getHtmlElementById("content-header-secondary");
+		List<HtmlElement> he = div.getHtmlElementsByTagName("dl");
+		int index = 0;
+		// ... we can just ignore skill brackets for now
+		if (!he.get(index).getHtmlElementsByTagName("dt").get(0).asText().equals("Lobby Type")) {
+			index++;
+		}
+		// Get fields
+		lobbyType = he.get(index++).getHtmlElementsByTagName("dd").get(0).asText();
+		gameMode = he.get(index++).getHtmlElementsByTagName("dd").get(0).asText();
+		region = he.get(index++).getHtmlElementsByTagName("dd").get(0).asText();
+		// format the duration
+		String temp = he.get(index++).getHtmlElementsByTagName("dd").get(0).asText();
+		while (temp.length() < 6)
+			temp = "00:" + temp;
+		duration = Time.valueOf(temp);
+		// format the timestamp
+		temp = he.get(index++).getHtmlElementsByTagName("dd").get(0).getHtmlElementsByTagName("time").get(0).getAttribute("datetime");
+		temp = temp.substring(0, temp.indexOf("+")).replace("T", " ") + ".0";
+		timestamp = Timestamp.valueOf(temp);
+		// find out who won by checking for an existing randiant win tag
+		if (page.getByXPath("//div[@class='match-result team radiant']").size() != 0)
+			radiantVictory = true;
+		// System.out.printf("Found match:\n\tID:\t\t%d\n\tLobby Type:\t%s\n\tGame Mode:\t%s\n\tRegion:\t\t%s\n\tDuration:\t%s\n\tVictor:\t\t%s\n\tPlayed:\t\t%s\n", mID, lobbyType, gameMode, region, duration.toString(), (radiantVictory ? "Radiant" : "Dire"), timestamp.toString());
+
+		// Team info
 		List<HtmlTable> teamTables = (List<HtmlTable>) page.getByXPath("//table");
 		for (HtmlTable team : teamTables) {
 			HtmlTableHeader header = team.getHeader();
 			List<HtmlTableRow> headerRows = header.getRows();
 			for (HtmlTableRow row : headerRows) {
-				System.out.println("Column Headers:");
+				// System.out.println("Column Headers:");
 				for (HtmlTableCell cell : row.getCells()) {
-					System.out.print(cell.asText() + " ");
+					// System.out.print(cell.asText() + " ");
 				}
-				System.out.println();
+				// System.out.println();
 			}
 			for (HtmlTableBody body : team.getBodies()) {
 				List<HtmlTableRow> rows = body.getRows();
 				for (HtmlTableRow row : rows) {
 					for (final HtmlTableCell cell : row.getCells()) {
-						System.out.println("   Found cell: " + cell.asText());
+						// System.out.println("   Found cell: " + cell.asText());
 					}
 				}
 
 			}
 		}
 		webClient.closeAllWindows();
-
-		return new Match();
+		Match match = new Match(mID, lobbyType, gameMode, region, duration, radiantVictory, timestamp, players);
+		return match;
 	}
 
 	private static void turnOffWarnings(WebClient webClient) {
