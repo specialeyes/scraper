@@ -4,7 +4,7 @@ import java.sql.Timestamp;
 public class Match {
 	private int mID;
 	private String lobbyType;
-	private String gameMode;
+	private String gameMode; 
 	private String region;
 	private Time duration;
 	private boolean dRVictory;

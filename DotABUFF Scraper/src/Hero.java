@@ -3,7 +3,7 @@ public class Hero {
 	private String name;
 	private String description;
 	private String lore;
-	private int[] skillSet;
+	private int[] skillSet; 
 	
 	public Hero (String name, String description, String lore, int[] skillSet) {
 		this.name = name;

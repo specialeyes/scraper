@@ -4,7 +4,7 @@ public class Item {
 	private int cost;
 	private String description;
 	private int lore;
-	private Item[] components;
+	private Item[] components; 
 	
 	public Item(String name, int cost, String description, int lore, Item[] components) {
 		this.name = name;

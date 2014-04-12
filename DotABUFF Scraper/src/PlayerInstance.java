@@ -12,7 +12,7 @@ public class PlayerInstance {
 	private int lastHits;
 	private int denies;
 	private int XPM;
-	private int GPM;
+	private int GPM; 
 	private int HD;
 	private int HH;
 	private int TD;
