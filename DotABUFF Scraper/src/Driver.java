@@ -1,4 +1,7 @@
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.sql.Time;
@@ -7,6 +10,14 @@ import java.util.List;
 import java.util.logging.Level;
 
 import org.apache.commons.logging.LogFactory;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.w3c.css.sac.CSSException;
 import org.w3c.css.sac.CSSParseException;
 import org.w3c.css.sac.ErrorHandler;
@@ -41,6 +52,20 @@ public class Driver {
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
+		}
+		
+		//Testing postJSON()
+		try {
+			JSONObject j = new JSONObject();
+			j.put("darp", 3);
+			j.put("durp", 4);
+			postJSON(j);
+		} catch (UnsupportedEncodingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (JSONException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
 	}
 
@@ -117,6 +142,43 @@ public class Driver {
 		return match;
 	}
 
+	//Need to try this on server machine...
+	private static void postJSON(JSONObject json) throws UnsupportedEncodingException {
+		HttpPost postRequest = new HttpPost("http://localhost:5984/");//external IP: 192.168.1.212
+		
+		StringEntity jsonData = new StringEntity(json.toString());
+		jsonData.setContentType("application/json");
+		postRequest.setEntity(jsonData);
+		
+		HttpClient client = new DefaultHttpClient();
+		try {
+			HttpResponse response = client.execute(postRequest);
+			
+			if (response.getStatusLine().getStatusCode() != 201) {
+				throw new RuntimeException("Failed : HTTP error code : "
+					+ response.getStatusLine().getStatusCode());
+			}
+	 
+			BufferedReader br = new BufferedReader(
+	                        new InputStreamReader((response.getEntity().getContent())));
+	 
+			String output;
+			System.out.println("Output from Server .... \n");
+			while ((output = br.readLine()) != null) {
+				System.out.println(output);
+			}
+	 
+			client.getConnectionManager().shutdown();
+			
+		} catch (ClientProtocolException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
 	private static void turnOffWarnings(WebClient webClient) {
 		LogFactory.getFactory().setAttribute("org.apache.commons.logging.Log", "org.apache.commons.logging.impl.NoOpLog");
 
