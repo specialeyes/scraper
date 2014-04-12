@@ -3,7 +3,7 @@ import java.util.HashMap;
 
 public class PlayerInstance {
 	private int pID;
-	private Hero hero;
+	private int heroID;
 	private int lvl;
 	private int kills;
 	private int deaths;
@@ -17,14 +17,14 @@ public class PlayerInstance {
 	private int HH;
 	private int TD;
 	private char team;
-	private Item[] itemBuild;
-	private HashMap<Integer, Skill> skillBuild;
+	private int[] itemBuild;
+	private HashMap<Integer, Integer> skillBuild; //lvl mapped to skillID
 	
-	public PlayerInstance(int pID, Hero hero, int lvl, int kills, int deaths, int assists, int gold,
+	public PlayerInstance(int pID, int heroID, int lvl, int kills, int deaths, int assists, int gold,
 			int lastHits, int denies, int XPM, int GPM, int HD, int HH, int TD, char team, 
-			Item[] itemBuild, HashMap<Integer, Skill> skillBuild) {
+			int[] itemBuild, HashMap<Integer, Integer> skillBuild) {
 		this.pID = pID;
-		this.hero = hero;
+		this.heroID = heroID;
 		this.lvl = lvl;
 		this.kills = kills;
 		this.deaths = deaths;

@@ -1,6 +1,7 @@
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.HashMap;
 import java.util.logging.Level;
 
 import org.apache.commons.logging.LogFactory;
@@ -22,7 +23,7 @@ import com.google.gson.Gson;
 
 public class Driver {
 	public static void main(String[] args) {
-
+		
 		String derp = "hello, world!";
 
 		// create the gson object
@@ -41,7 +42,7 @@ public class Driver {
 			HtmlDivision div = (HtmlDivision) page.getByXPath("//div[@class='team-results']").get(0);
 			for (HtmlElement he : div.getHtmlElementsByTagName("section")) {
 				HtmlElement teamTable = he.getHtmlElementsByTagName("tbody").get(0);
-				for (HtmlElement player : teamTable.getHtmlElementsByTagName("tr")) {
+				for (HtmlElement player : teamTable.getHtmlElementsByTagName("tr")) { 
 					System.out.println(player.asText());// .replace("\n", ""));
 				}
 				System.out.println();
