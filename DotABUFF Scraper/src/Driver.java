@@ -95,7 +95,7 @@ public class Driver {
 		String lobbyType = "null";
 		String gameMode = "null";
 		String region = "null";
-		Time duration = Time.valueOf("00:00:00");
+		String duration = "00:00:00";
 		boolean radiantVictory = false;
 		Timestamp timestamp = Timestamp.valueOf("0000-01-01 00:00:00");
 		PlayerInstance[] players = new PlayerInstance[10];
@@ -116,7 +116,7 @@ public class Driver {
 		String temp = he.get(index++).getHtmlElementsByTagName("dd").get(0).asText();
 		while (temp.length() < 6)
 			temp = "00:" + temp;
-		duration = Time.valueOf(temp);
+		duration = temp;
 		// format the timestamp
 		temp = he.get(index++).getHtmlElementsByTagName("dd").get(0).getHtmlElementsByTagName("time").get(0).getAttribute("datetime");
 		temp = temp.substring(0, temp.indexOf("+")).replace("T", " ") + ".0";
