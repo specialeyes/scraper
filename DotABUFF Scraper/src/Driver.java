@@ -45,7 +45,7 @@ public class Driver {
 
 		boolean oneGame = true;
 
-		int single = 610693718;
+		int single = 611858683;
 
 		int start = 490600006;
 		int end = 610693718;
@@ -129,6 +129,7 @@ public class Driver {
 		// Team info
 		int playerIndex = 0;
 		List<HtmlTable> teamTables = (List<HtmlTable>) page.getByXPath("//table");
+		boolean radiant = true;
 		for (HtmlTable team : teamTables) {
 			HtmlTableHeader header = team.getHeader();
 			List<HtmlTableRow> headerRows = header.getRows();
@@ -143,23 +144,23 @@ public class Driver {
 				List<HtmlTableRow> rows = body.getRows();
 
 				for (HtmlTableRow row : rows) {
-					players[playerIndex++] = parsePlayer(row);
+					players[playerIndex++] = parsePlayer(row, radiant);
 				}
 			}
+			radiant = false;
 		}
 		webClient.closeAllWindows();
 		Match match = new Match(mID, lobbyType, gameMode, region, duration, radiantVictory, timestamp, players);
 		return match;
 	}
 
-	public static PlayerInstance parsePlayer(HtmlTableRow row) {
+	public static PlayerInstance parsePlayer(HtmlTableRow row, boolean radiant) {
 		String playerName = "";
 		int pID = 0;
 		String heroName = "";
 		int[] stats = new int[12];
 		int stat = 0;
 
-		boolean radiant = true;
 		String[] itemBuild;
 		HashMap<Integer, Integer> skillBuild = null;
 
