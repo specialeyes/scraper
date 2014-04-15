@@ -1,9 +1,9 @@
 import java.util.HashMap;
 
-
 public class PlayerInstance {
+	private String player;
 	private int pID;
-	private int heroID;
+	private String heroName;
 	private int lvl;
 	private int kills;
 	private int deaths;
@@ -12,32 +12,31 @@ public class PlayerInstance {
 	private int lastHits;
 	private int denies;
 	private int XPM;
-	private int GPM; 
+	private int GPM;
 	private int HD;
 	private int HH;
 	private int TD;
-	private char team;
-	private int[] itemBuild;
-	private HashMap<Integer, Integer> skillBuild; //lvl mapped to skillID
-	
-	public PlayerInstance(int pID, int heroID, int lvl, int kills, int deaths, int assists, int gold,
-			int lastHits, int denies, int XPM, int GPM, int HD, int HH, int TD, char team, 
-			int[] itemBuild, HashMap<Integer, Integer> skillBuild) {
+	private boolean radiant;
+	private String[] itemBuild;
+	private HashMap<Integer, Integer> skillBuild; // lvl mapped to skillID
+
+	public PlayerInstance(String player, int pID, String heroName, int[] stats, boolean radiant, String[] itemBuild, HashMap<Integer, Integer> skillBuild) {
+		this.player = player;
 		this.pID = pID;
-		this.heroID = heroID;
-		this.lvl = lvl;
-		this.kills = kills;
-		this.deaths = deaths;
-		this.assists = assists;
-		this.gold = gold;
-		this.lastHits = lastHits;
-		this.denies = denies;
-		this.XPM = XPM;
-		this.GPM = GPM;
-		this.HD = HD;
-		this.HH = HH;
-		this.TD = TD;
-		this.team = team;
+		this.heroName = heroName;
+		this.lvl = stats[0];
+		this.kills = stats[1];
+		this.deaths = stats[2];
+		this.assists = stats[3];
+		this.gold = stats[4];
+		this.lastHits = stats[5];
+		this.denies = stats[6];
+		this.XPM = stats[7];
+		this.GPM = stats[8];
+		this.HD = stats[9];
+		this.HH = stats[10];
+		this.TD = stats[11];
+		this.radiant = radiant;
 		this.itemBuild = itemBuild;
 		this.skillBuild = skillBuild;
 	}
