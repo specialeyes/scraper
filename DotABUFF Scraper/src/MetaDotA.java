@@ -1,13 +1,15 @@
 import java.util.HashMap;
 
-
 public class MetaDotA {
-	private HashMap<Integer, Skill> skills;
-	private HashMap<Integer, Double>  playerWinRates; //Average win-rate for player
-	//private 
+	private HashMap<String, Skill> skills;	// skillID -> skill
+	private HashMap<String, Hero> heroes;   // heroID  -> hero
+	private HashMap<String, Item> items;	// itemID  -> item
 	
-	//TODO:	Number of times an item is used on a hero
+	//Item-Hero Aggregates
+	public HashMap<Integer, HashMap<String, String>> numItemOnHero;     // matchesUsed -> <itemID -> heroID>
+	private HashMap<Double, HashMap<String, String>> winRateItemOnHero; // winRate 	   -> <itmeID -> heroID>
+	
+	private HashMap<Double, Integer>  playerWinRates; 	//winRate -> playerID
 	//TODO: Number of times an item is bought by a player
 	//TODO: Number of games an item has been used in
-	
 }

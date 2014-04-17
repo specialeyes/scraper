@@ -24,6 +24,7 @@ import org.w3c.css.sac.CSSParseException;
 import org.w3c.css.sac.ErrorHandler;
 
 import com.gargoylesoftware.htmlunit.ElementNotFoundException;
+import com.gargoylesoftware.htmlunit.FailingHttpStatusCodeException;
 import com.gargoylesoftware.htmlunit.IncorrectnessListener;
 import com.gargoylesoftware.htmlunit.ScriptException;
 import com.gargoylesoftware.htmlunit.WebClient;
@@ -42,15 +43,26 @@ import com.google.gson.Gson;
 
 public class Driver {
 	public static void main(String[] args) {
+		Gson gson = new Gson();
+		
+		//Scrape MetaDotA
+		//MetaDotA mD = new MetaDotA();
+		//for each heroID
+			try {
+				scrapeItemsForHero("abaddon");
+			} catch (FailingHttpStatusCodeException e) {
+				e.printStackTrace();
+			} catch (MalformedURLException e) {
+				e.printStackTrace();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 
-		boolean oneGame = true;
-
+		//Scrape Matches
+		/*boolean oneGame = true;
 		int single = 611858683;
-
 		int start = 490600006;
 		int end = 610693718;
-
-		Gson gson = new Gson();
 		Match match;
 		for (int i = (oneGame ? single : start); i < (oneGame ? single + 1 : end); i++) {
 			try {
@@ -63,7 +75,7 @@ public class Driver {
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
-		}
+		}*/
 
 		// Testing postJSON()
 		// try {
@@ -81,10 +93,12 @@ public class Driver {
 	}
 
 	private static Match scrapeMatch(int id) throws MatchNotFoundException, IOException {
+		//Establish connection to webpage
 		WebClient webClient = new WebClient();
 		turnOffWarnings(webClient);
 		HtmlPage page = webClient.getPage("http://dotabuff.com/matches/" + id);
-
+		
+		//Check if match exists or not
 		try {
 			page.getHtmlElementById("status");
 			throw new MatchNotFoundException();
@@ -152,6 +166,41 @@ public class Driver {
 		webClient.closeAllWindows();
 		Match match = new Match(mID, lobbyType, gameMode, region, duration, radiantVictory, timestamp, players);
 		return match;
+	}
+	
+	private static void scrapeItemsForHero(String heroID) throws FailingHttpStatusCodeException, MalformedURLException, IOException {
+		//Establish connection with webpage (only care about use after patch 6.80)
+		WebClient webClient = new WebClient();
+		turnOffWarnings(webClient);
+		HtmlPage page = webClient.getPage("http://dotabuff.com/heroes/" + heroID + "/items?date=patch_6.80");
+	
+		//Pull information from table [item, matchesPlayed, winRate]
+		HtmlTable itemTable = ((List<HtmlTable>)page.getByXPath("//table")).get(0);
+		HtmlTableHeader header = itemTable.getHeader();
+		List<HtmlTableRow> headerRows = header.getRows();
+		for(HtmlTableRow row : headerRows) {
+			System.out.println("Column Headers: ");
+			for(HtmlTableCell cell : row.getCells())
+				System.out.print(cell.asText() + ", ");
+			System.out.println();
+		}
+		System.out.println();
+		for(HtmlTableBody body : itemTable.getBodies()) {
+			List<HtmlTableRow> rows = body.getRows();
+			for(HtmlTableRow row : rows) {
+				String matchesPlayed;
+				String winRate;
+				String itemID = row.asXml();
+				itemID = itemID.substring(itemID.indexOf("/items/"));
+				itemID = itemID.substring(7, itemID.indexOf("\">"));
+				
+				matchesPlayed = row.getCell(2).asText();
+				winRate = row.getCell(3).asText();
+				
+				System.out.println(itemID + "    :    " + matchesPlayed + "    :    " + winRate);
+			}
+		}
+		webClient.closeAllWindows();
 	}
 
 	public static PlayerInstance parsePlayer(HtmlTableRow row, boolean radiant) {
@@ -224,7 +273,6 @@ public class Driver {
 		return value;
 	}
 
-	// Need to try this on server machine...
 	private static void postJSON(JSONObject json) throws UnsupportedEncodingException {
 		HttpPost postRequest = new HttpPost("http://localhost:5984/");// external IP: 192.168.1.212
 
