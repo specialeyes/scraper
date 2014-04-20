@@ -82,15 +82,18 @@ public class Driver {
 		for (int i = (oneGame ? single : start); i < (oneGame ? single + 1 : end); i++) {
 			try {
 				match = scrapeMatch(i);
-				System.out.println(gson.toJson(match));
-				File f = new File("D:\\Desktop\\http" + i + ".json");
+				String json = gson.toJson(match);
+				System.out.println(json);
+				File f = new File("/srv/http/" + i + ".json");
+				BufferedWriter writer = new BufferedWriter(new FileWriter(f));
 				try {
-					f.mkdirs();
+					f.getParentFile().mkdirs();
 					f.createNewFile();
-					BufferedWriter writer = new BufferedWriter(new FileWriter(f));
-					writer.write(gson.toJson(match));
+					writer.write(json);
 				} catch (IOException e) {
 					e.printStackTrace();
+				} finally {
+					writer.close();
 				}
 
 			} catch (MatchNotFoundException e) {
