@@ -1,10 +1,12 @@
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.sql.Time;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -44,23 +46,36 @@ import com.google.gson.Gson;
 public class Driver {
 	public static void main(String[] args) {
 		Gson gson = new Gson();
-		
-		//Scrape MetaDotA
-		//MetaDotA mD = new MetaDotA();
-		//for each heroID
-			try {
-				scrapeItemsForHero("abaddon");
-			} catch (FailingHttpStatusCodeException e) {
-				e.printStackTrace();
-			} catch (MalformedURLException e) {
-				e.printStackTrace();
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
+		// Scrape MetaDotA
+		// MetaDotA mD = new MetaDotA();
+		// for each heroID
+		try {
+			scrapeItemsForHero("abaddon");
+		} catch (FailingHttpStatusCodeException e) {
+			e.printStackTrace();
+		} catch (MalformedURLException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		// Scrape MetaDotA
+		// MetaDotA mD = new MetaDotA();
+		// for each heroID
+		// try {
+		// scrapeItemsForHero("abaddon");
+		// } catch (FailingHttpStatusCodeException e) {
+		// e.printStackTrace();
+		// } catch (MalformedURLException e) {
+		// e.printStackTrace();
+		// } catch (IOException e) {
+		// e.printStackTrace();
+		// }
+		//
+		boolean oneGame = true;
 
-		//Scrape Matches
-		/*boolean oneGame = true;
-		int single = 611858683;
+		int single = 612191169;
+		// Scrape Matches
+
 		int start = 490600006;
 		int end = 610693718;
 		Match match;
@@ -68,6 +83,16 @@ public class Driver {
 			try {
 				match = scrapeMatch(i);
 				System.out.println(gson.toJson(match));
+				File f = new File("D:\\Desktop\\http" + i + ".json");
+				try {
+					f.mkdirs();
+					f.createNewFile();
+					BufferedWriter writer = new BufferedWriter(new FileWriter(f));
+					writer.write(gson.toJson(match));
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+
 			} catch (MatchNotFoundException e) {
 				System.err.println("Match " + i + " not found!");
 			} catch (IOException e) {
@@ -75,7 +100,7 @@ public class Driver {
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
-		}*/
+		}
 
 		// Testing postJSON()
 		// try {
@@ -93,12 +118,11 @@ public class Driver {
 	}
 
 	private static Match scrapeMatch(int id) throws MatchNotFoundException, IOException {
-		//Establish connection to webpage
+		// Establish connection to webpage
 		WebClient webClient = new WebClient();
 		turnOffWarnings(webClient);
 		HtmlPage page = webClient.getPage("http://dotabuff.com/matches/" + id);
-		
-		//Check if match exists or not
+		// Check if match exists or not
 		try {
 			page.getHtmlElementById("status");
 			throw new MatchNotFoundException();
@@ -167,36 +191,36 @@ public class Driver {
 		Match match = new Match(mID, lobbyType, gameMode, region, duration, radiantVictory, timestamp, players);
 		return match;
 	}
-	
+
 	private static void scrapeItemsForHero(String heroID) throws FailingHttpStatusCodeException, MalformedURLException, IOException {
-		//Establish connection with webpage (only care about use after patch 6.80)
+		// Establish connection with webpage (only care about use after patch 6.80)
 		WebClient webClient = new WebClient();
 		turnOffWarnings(webClient);
 		HtmlPage page = webClient.getPage("http://dotabuff.com/heroes/" + heroID + "/items?date=patch_6.80");
-	
-		//Pull information from table [item, matchesPlayed, winRate]
-		HtmlTable itemTable = ((List<HtmlTable>)page.getByXPath("//table")).get(0);
+
+		// Pull information from table [item, matchesPlayed, winRate]
+		HtmlTable itemTable = ((List<HtmlTable>) page.getByXPath("//table")).get(0);
 		HtmlTableHeader header = itemTable.getHeader();
 		List<HtmlTableRow> headerRows = header.getRows();
-		for(HtmlTableRow row : headerRows) {
+		for (HtmlTableRow row : headerRows) {
 			System.out.println("Column Headers: ");
-			for(HtmlTableCell cell : row.getCells())
+			for (HtmlTableCell cell : row.getCells())
 				System.out.print(cell.asText() + ", ");
 			System.out.println();
 		}
 		System.out.println();
-		for(HtmlTableBody body : itemTable.getBodies()) {
+		for (HtmlTableBody body : itemTable.getBodies()) {
 			List<HtmlTableRow> rows = body.getRows();
-			for(HtmlTableRow row : rows) {
+			for (HtmlTableRow row : rows) {
 				String matchesPlayed;
 				String winRate;
 				String itemID = row.asXml();
 				itemID = itemID.substring(itemID.indexOf("/items/"));
 				itemID = itemID.substring(7, itemID.indexOf("\">"));
-				
+
 				matchesPlayed = row.getCell(2).asText();
 				winRate = row.getCell(3).asText();
-				
+
 				System.out.println(itemID + "    :    " + matchesPlayed + "    :    " + winRate);
 			}
 		}
@@ -274,7 +298,7 @@ public class Driver {
 	}
 
 	private static void postJSON(JSONObject json) throws UnsupportedEncodingException {
-		HttpPost postRequest = new HttpPost("http://localhost:5984/");// external IP: 192.168.1.212
+		HttpPost postRequest = new HttpPost("http://192.168.1.212/json/sampledata.json");// external IP: 192.168.1.212
 
 		StringEntity jsonData = new StringEntity(json.toString());
 		jsonData.setContentType("application/json");
@@ -284,9 +308,10 @@ public class Driver {
 		try {
 			HttpResponse response = client.execute(postRequest);
 
-			if (response.getStatusLine().getStatusCode() != 201) {
-				throw new RuntimeException("Failed : HTTP error code : " + response.getStatusLine().getStatusCode());
-			}
+			System.out.println("Received status code: " + response.getStatusLine().getStatusCode());
+			// if (response.getStatusLine().getStatusCode() != 201) {
+			// throw new RuntimeException("Failed : HTTP error code : " + response.getStatusLine().getStatusCode());
+			// }
 
 			BufferedReader br = new BufferedReader(new InputStreamReader((response.getEntity().getContent())));
 
