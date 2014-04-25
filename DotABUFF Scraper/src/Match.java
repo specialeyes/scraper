@@ -20,4 +20,37 @@ public class Match {
 		this.timestamp = timestamp;
 		this.players = players;
 	}
+
+	public int getmID() {
+		return mID;
+	}
+
+	public String getLobbyType() {
+		return lobbyType;
+	}
+
+	public String getGameMode() {
+		return gameMode;
+	}
+
+	public String getRegion() {
+		return region;
+	}
+
+	public String getDuration() {
+		return duration;
+	}
+
+	public boolean isRadiantVictory() {
+		return radiantVictory;
+	}
+
+	public Timestamp getTimestamp() {
+		return timestamp;
+	}
+
+	public PlayerInstance[] getPlayers() {
+		return players;
+	}
+
 }

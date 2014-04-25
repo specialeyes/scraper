@@ -40,4 +40,77 @@ public class PlayerInstance {
 		this.itemBuild = itemBuild;
 		this.skillBuild = skillBuild;
 	}
+
+	public String getPlayer() {
+		return player;
+	}
+
+	public int getpID() {
+		return pID;
+	}
+
+	public String getHeroName() {
+		return heroName;
+	}
+
+	public int getLvl() {
+		return lvl;
+	}
+
+	public int getKills() {
+		return kills;
+	}
+
+	public int getDeaths() {
+		return deaths;
+	}
+
+	public int getAssists() {
+		return assists;
+	}
+
+	public int getGold() {
+		return gold;
+	}
+
+	public int getLastHits() {
+		return lastHits;
+	}
+
+	public int getDenies() {
+		return denies;
+	}
+
+	public int getXPM() {
+		return XPM;
+	}
+
+	public int getGPM() {
+		return GPM;
+	}
+
+	public int getHD() {
+		return HD;
+	}
+
+	public int getHH() {
+		return HH;
+	}
+
+	public int getTD() {
+		return TD;
+	}
+
+	public boolean isRadiant() {
+		return radiant;
+	}
+
+	public String[] getItemBuild() {
+		return itemBuild;
+	}
+
+	public HashMap<Integer, Integer> getSkillBuild() {
+		return skillBuild;
+	}
+
 }

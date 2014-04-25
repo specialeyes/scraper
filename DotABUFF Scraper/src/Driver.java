@@ -1,26 +1,20 @@
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.logging.Level;
 
 import org.apache.commons.logging.LogFactory;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.ClientProtocolException;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.json.JSONObject;
 import org.w3c.css.sac.CSSException;
 import org.w3c.css.sac.CSSParseException;
 import org.w3c.css.sac.ErrorHandler;
@@ -44,47 +38,73 @@ import com.gargoylesoftware.htmlunit.javascript.JavaScriptErrorListener;
 import com.google.gson.Gson;
 
 public class Driver {
-	public static void main(String[] args) {
-		Gson gson = new Gson();
-		// Scrape MetaDotA
-		// MetaDotA mD = new MetaDotA();
-		// for each heroID
-		try {
-			scrapeItemsForHero("abaddon");
-		} catch (FailingHttpStatusCodeException e) {
-			e.printStackTrace();
-		} catch (MalformedURLException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
+	private static Gson gson = new Gson();
+
+	public enum Heroes {
+		abaddon("abaddon"), alchemist("alchemist"), ancient_apparition("ancient-apparition"), anti_mage("anti-mage"), axe("axe"), bane("bane"), batrider("batrider"), beastmaster("beastmaster"), bloodseeker("bloodseeker"), bounty_hunter("bounty-hunter"), brewmaster("brewmaster"), bristleback("bristleback"), broodmother("broodmother"), centaur_warrunner("centaur-warrunner"), chaos_knight("chaos-knight"), chen("chen"), clinkz("clinkz"), clockwerk("clockwerk"), crystal_maiden("crystal-maiden"), dark_seer("dark-seer"), dazzle("dazzle"), death_prophet("death-prophet"), disruptor("disruptor"), doom("doom"), dragon_knight("dragon-knight"), drow_ranger("drow-ranger"), earthshaker("earthshaker"), earth_spirit("earth-spirit"), elder_titan("elder-titan"), ember_spirit("ember-spirit"), enchantress("enchantress"), enigma("enigma"), faceless_void("faceless-void"), gyrocopter("gyrocopter"), huskar("huskar"), invoker("invoker"), io("io"), jakiro("jakiro"), juggernaut("juggernaut"), keeper_of_the_light("keeper-of-the-light"), kunkka("kunkka"), legion_commander("legion-commander"), leshrac("leshrac"), lich("lich"), lifestealer("lifestealer"), lina("lina"), lion("lion"), lone_druid("lone-druid"), luna("luna"), lycan("lycan"), magnus("magnus"), medusa("medusa"), meepo("meepo"), mirana("mirana"), morphling("morphling"), naga_siren("naga-siren"), natures_prophet("natures-prophet"), necrophos("necrophos"), night_stalker("night-stalker"), nyx_assassin("nyx-assassin"), ogre_magi("ogre-magi"), omniknight("omniknight"), outworld_devourer("outworld-devourer"), phantom_assassin("phantom-assassin"), phantom_lancer("phantom-lancer"), phoenix("phoenix"), puck("puck"), pudge("pudge"), pugna("pugna"), queen_of_pain("queen-of-pain"), razor("razor"), riki("riki"), rubick("rubick"), sand_king("sand-king"), shadow_demon("shadow-demon"), shadow_fiend("shadow-fiend"), shadow_shaman("shadow-shaman"), silencer("silencer"), skywrath_mage("skywrath-mage"), slardar("slardar"), slark("slark"), sniper("sniper"), spectre("spectre"), spirit_breaker("spirit-breaker"), storm_spirit("storm-spirit"), sven("sven"), templar_assassin("templar-assassin"), terrorblade("terrorblade"), tidehunter("tidehunter"), timbersaw("timbersaw"), tinker("tinker"), tiny("tiny"), treant_protector("treant-protector"), troll_warlord("troll-warlord"), tusk("tusk"), undying("undying"), ursa("ursa"), vengeful_spirit("vengeful-spirit"), venomancer("venomancer"), viper("viper"), visage("visage"), warlock("warlock"), weaver("weaver"), windranger("windranger"), witch_doctor("witch-doctor"), wraith_king("wraith-king"), zeus("zeus");
+		private String uid;
+
+		private Heroes(String uid) {
+			this.uid = uid;
 		}
-		// Scrape MetaDotA
-		// MetaDotA mD = new MetaDotA();
-		// for each heroID
-		// try {
-		// scrapeItemsForHero("abaddon");
-		// } catch (FailingHttpStatusCodeException e) {
-		// e.printStackTrace();
-		// } catch (MalformedURLException e) {
-		// e.printStackTrace();
-		// } catch (IOException e) {
-		// e.printStackTrace();
-		// }
-		//
-		boolean oneGame = true;
 
-		int single = 612191169;
-		// Scrape Matches
+		public String getUID() {
+			return uid;
+		}
+	}
 
+	private static class ItemMeta {
+		String id, itemName, itemImageURL;
+		int matches;
+		double winrate;
+
+		public ItemMeta(String id, String itemName, String itemImageURL, int matches, double winrate) {
+			super();
+			this.id = id;
+			this.itemName = itemName;
+			this.itemImageURL = itemImageURL;
+			this.matches = matches;
+			this.winrate = winrate;
+		}
+	}
+
+	/**
+	 * Generates the data files used by Team SpecialEyes's InfoVis project.
+	 * 
+	 * @param args
+	 */
+	public static void main(String[] args) {
+
+		/*
+		 * Specify range of match IDs to scrape, and the directory to store the output in.
+		 */
+		String outputDirectory = "D:\\Desktop\\matches";
 		int start = 490600006;
-		int end = 610693718;
+		int end = 490600016;
+		// scrapeMatches(outputDirectory, start);
+		// [start,end)
+		scrapeMatches(outputDirectory, start, end);
+
+		generateTeamCompositionStats(outputDirectory, outputDirectory + "\\teamCompositionStats");
+
+		generateItemMetaMap(outputDirectory + "\\itemWR");
+	}
+
+	private static void scrapeMatches(String outputDirectory, int matchID) {
+		scrapeMatches(outputDirectory, matchID, matchID + 1);
+	}
+
+	private static void scrapeMatches(String outputDirectory, int start, int end) {
 		Match match;
-		for (int i = (oneGame ? single : start); i < (oneGame ? single + 1 : end); i++) {
+		File f = new File(outputDirectory);
+		f.mkdirs();
+		System.out.println("Scraping matches.");
+		for (int i = start; i < end; i++) {
 			try {
 				match = scrapeMatch(i);
 				String json = gson.toJson(match);
 				System.out.println(json);
-				File f = new File("/srv/http/" + i + ".json");
+				f = new File(outputDirectory + "\\" + i + ".json");
 				BufferedWriter writer = new BufferedWriter(new FileWriter(f));
 				try {
 					f.getParentFile().mkdirs();
@@ -97,27 +117,174 @@ public class Driver {
 				}
 
 			} catch (MatchNotFoundException e) {
-				System.err.println("Match " + i + " not found!");
+				System.out.println("Match " + i + " not found!");
 			} catch (IOException e) {
-				System.err.println("Failed to scrape page!");
+				System.out.println("Failed to scrape page!");
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
 		}
+		System.out.println("Done.");
+	}
 
-		// Testing postJSON()
-		// try {
-		// JSONObject j = new JSONObject();
-		// j.put("darp", 3);
-		// j.put("durp", 4);
-		// postJSON(j);
-		// } catch (UnsupportedEncodingException e) {
-		// // TODO Auto-generated catch block
-		// e.printStackTrace();
-		// } catch (JSONException e) {
-		// // TODO Auto-generated catch block
-		// e.printStackTrace();
-		// }
+	private static void generateTeamCompositionStats(String matchDirectory, String outputDirectory) {
+		HashMap<String, TeamComposition> teams = new HashMap<String, TeamComposition>();
+		System.out.println("Generating team composition stats.");
+		try {
+			BufferedReader buff = null;
+			File folder = new File(matchDirectory);
+			File[] listOfFiles = folder.listFiles();
+			String line, temp;
+			int duration = 0, index = 0;
+			String[] heroes = new String[5];
+			boolean radiantVictory = false;
+
+			for (File f : listOfFiles) {
+				buff = new BufferedReader(new FileReader(f));
+				dirty: while ((line = buff.readLine()) != null) {
+					Match match = gson.fromJson(line, Match.class);
+					temp = match.getDuration();
+					duration = Integer.parseInt(temp.substring(0, temp.indexOf(":"))) * 60;
+					duration += Integer.parseInt(temp.substring(temp.indexOf(":") + 1, temp.indexOf(":") + 3));
+					radiantVictory = match.isRadiantVictory();
+					duration /= 5;
+					if (duration > 17)
+						duration = 17;
+					for (int i = 0; i < 10; i += 5) {
+						for (int j = i; j < i + 5; j++) {
+							heroes[j % 5] = match.getPlayers()[j].getHeroName();
+							if (heroes[j % 5].contains("class")) {
+								System.out.println("Skipping " + match.getmID() + ": " + match.getLobbyType() + " (Abandon)");
+								continue dirty;
+							}
+						}
+						Arrays.sort(heroes);
+						// System.out.println(Arrays.toString(heroes));
+						for (int j = 0; j < 5; j++) {
+							temp = heroes[j];
+							// System.out.println(temp);
+							recordGame(teams, temp, duration, radiantVictory);
+							for (int k = j + 1; k < 5; k++) {
+								temp = heroes[j];
+								temp += heroes[k];
+								// System.out.println(temp);
+								recordGame(teams, temp, duration, radiantVictory);
+								for (int l = k + 1; l < 5; l++) {
+									temp = heroes[j];
+									temp += heroes[k];
+									temp += heroes[l];
+									// System.out.println(temp);
+									recordGame(teams, temp, duration, radiantVictory);
+									for (int m = l + 1; m < 5; m++) {
+										temp = heroes[j];
+										temp += heroes[k];
+										temp += heroes[l];
+										temp += heroes[m];
+										// System.out.println(temp);
+										recordGame(teams, temp, duration, radiantVictory);
+										for (int n = m + 1; n < 5; n++) {
+											temp = heroes[j];
+											temp += heroes[k];
+											temp += heroes[l];
+											temp += heroes[m];
+											temp += heroes[n];
+											// System.out.println(temp);
+											recordGame(teams, temp, duration, radiantVictory);
+										}
+									}
+								}
+							}
+						}
+						radiantVictory = !radiantVictory;
+					}
+				}
+				index++;
+				System.out.println(index + "/" + listOfFiles.length);
+			}
+			if (buff != null)
+				buff.close();
+
+			File output = new File(outputDirectory);
+			output.mkdirs();
+			System.out.println("Writing output...");
+			index = 0;
+			duration = teams.keySet().size();
+			for (String s : teams.keySet()) {
+				if (index % 100 == 0)
+					System.out.printf("Writing (%06d/%d) %f%%\n", index, duration, (index * 100.0 / duration));
+				output = new File(outputDirectory + "\\" + s + ".json");
+				BufferedWriter writer = new BufferedWriter(new FileWriter(output));
+				writer.write(gson.toJson(teams.get(s)));
+				writer.close();
+				index++;
+			}
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		System.out.println("Done.");
+	}
+
+	private static void recordGame(HashMap<String, TeamComposition> teams, String teamComp, int duration, boolean radiantVictory) {
+		if (!teams.containsKey(teamComp)) {
+			teams.put(teamComp, new TeamComposition());
+		}
+		teams.get(teamComp).record(duration, radiantVictory);
+	}
+
+	private static void generateItemMetaMap(String outputDirectory) {
+		Gson gson = new Gson();
+		HashMap<String, ArrayList<ItemMeta>> map = new HashMap<String, ArrayList<ItemMeta>>();
+		int i = 0;
+		int max = Heroes.values().length;
+		System.out.println("Generating item stats file.");
+		for (Heroes h : Heroes.values()) {
+			try {
+				ArrayList<Object[]> heroItems = scrapeItemsForHero(h.uid);
+				final ArrayList<ItemMeta> itemList = new ArrayList<ItemMeta>();
+
+				for (Object[] s : heroItems) {
+					String id = (String) s[0];
+					String itemName = (String) s[1];
+					String itemImageURL = (String) s[2];
+					int matches = Integer.parseInt(((String) s[3]).replace(",", ""));
+					double winrate = Double.parseDouble(((String) s[4]).replace("%", ""));
+
+					itemList.add(new ItemMeta(id, itemName, itemImageURL, matches, winrate));
+				}
+
+				map.put(h.uid, itemList);
+				i++;
+				System.out.println((int) (i / (max * 1.0) * 100) + "%");
+			} catch (FailingHttpStatusCodeException e) {
+				e.printStackTrace();
+			} catch (MalformedURLException e) {
+				e.printStackTrace();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+		File f = new File(outputDirectory);
+		f.mkdirs();
+		BufferedWriter writer = null;
+		try {
+			f = new File(outputDirectory + "\\itemWinrates.json");
+			writer = new BufferedWriter(new FileWriter(f));
+			writer.write(gson.toJson(map));
+		} catch (IOException e) {
+			e.printStackTrace();
+		} finally {
+			try {
+				if (writer != null)
+					writer.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+		System.out.println("Done.");
 	}
 
 	private static Match scrapeMatch(int id) throws MatchNotFoundException, IOException {
@@ -195,39 +362,41 @@ public class Driver {
 		return match;
 	}
 
-	private static void scrapeItemsForHero(String heroID) throws FailingHttpStatusCodeException, MalformedURLException, IOException {
+	private static ArrayList<Object[]> scrapeItemsForHero(String heroID) throws FailingHttpStatusCodeException, MalformedURLException, IOException {
 		// Establish connection with webpage (only care about use after patch 6.80)
 		WebClient webClient = new WebClient();
 		turnOffWarnings(webClient);
 		HtmlPage page = webClient.getPage("http://dotabuff.com/heroes/" + heroID + "/items?date=patch_6.80");
 
+		ArrayList<Object[]> data = new ArrayList<Object[]>();
+
 		// Pull information from table [item, matchesPlayed, winRate]
 		HtmlTable itemTable = ((List<HtmlTable>) page.getByXPath("//table")).get(0);
 		HtmlTableHeader header = itemTable.getHeader();
 		List<HtmlTableRow> headerRows = header.getRows();
-		for (HtmlTableRow row : headerRows) {
-			System.out.println("Column Headers: ");
-			for (HtmlTableCell cell : row.getCells())
-				System.out.print(cell.asText() + ", ");
-			System.out.println();
-		}
-		System.out.println();
 		for (HtmlTableBody body : itemTable.getBodies()) {
 			List<HtmlTableRow> rows = body.getRows();
 			for (HtmlTableRow row : rows) {
-				String matchesPlayed;
-				String winRate;
+				String matchesPlayed, winRate, itemName = "", itemImageURL = "";
 				String itemID = row.asXml();
-				itemID = itemID.substring(itemID.indexOf("/items/"));
+				itemName = itemImageURL = itemID = itemID.substring(itemID.indexOf("/items/"));
 				itemID = itemID.substring(7, itemID.indexOf("\">"));
+
+				itemName = itemName.substring(itemName.indexOf("alt=") + 5);
+				itemName = itemName.substring(0, itemName.indexOf("\""));
+
+				itemImageURL = itemImageURL.substring(itemImageURL.indexOf("src=") + 5);
+				itemImageURL = itemImageURL.substring(0, itemImageURL.indexOf("\""));
 
 				matchesPlayed = row.getCell(2).asText();
 				winRate = row.getCell(3).asText();
 
-				System.out.println(itemID + "    :    " + matchesPlayed + "    :    " + winRate);
+				data.add(new String[] { itemID, itemName, itemImageURL, matchesPlayed, winRate });
 			}
 		}
 		webClient.closeAllWindows();
+
+		return data;
 	}
 
 	public static PlayerInstance parsePlayer(HtmlTableRow row, boolean radiant) {
@@ -298,41 +467,6 @@ public class Driver {
 		if (decimal)
 			value /= 10;
 		return value;
-	}
-
-	private static void postJSON(JSONObject json) throws UnsupportedEncodingException {
-		HttpPost postRequest = new HttpPost("http://192.168.1.212/json/sampledata.json");// external IP: 192.168.1.212
-
-		StringEntity jsonData = new StringEntity(json.toString());
-		jsonData.setContentType("application/json");
-		postRequest.setEntity(jsonData);
-
-		HttpClient client = new DefaultHttpClient();
-		try {
-			HttpResponse response = client.execute(postRequest);
-
-			System.out.println("Received status code: " + response.getStatusLine().getStatusCode());
-			// if (response.getStatusLine().getStatusCode() != 201) {
-			// throw new RuntimeException("Failed : HTTP error code : " + response.getStatusLine().getStatusCode());
-			// }
-
-			BufferedReader br = new BufferedReader(new InputStreamReader((response.getEntity().getContent())));
-
-			String output;
-			System.out.println("Output from Server .... \n");
-			while ((output = br.readLine()) != null) {
-				System.out.println(output);
-			}
-
-			client.getConnectionManager().shutdown();
-
-		} catch (ClientProtocolException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
 	}
 
 	private static void turnOffWarnings(WebClient webClient) {
